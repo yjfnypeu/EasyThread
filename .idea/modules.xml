@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/EasyThread.iml" filepath="$PROJECT_DIR$/EasyThread.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/easythread/easythread.iml" filepath="$PROJECT_DIR$/easythread/easythread.iml" />
+      <module fileurl="file://$PROJECT_DIR$/javatest/javatest.iml" filepath="$PROJECT_DIR$/javatest/javatest.iml" />
     </modules>
   </component>
 </project>
