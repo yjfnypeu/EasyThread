@@ -25,9 +25,10 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         editText = (EditText) findViewById(R.id.thread_name);
-        executor = EasyThread.Builder.fixed(2)
+        executor = EasyThread.Builder
+                .fixed(2)
                 .priority(Thread.MAX_PRIORITY)
-                .name("测试线程")
+                .name("thread name")
                 .build();
     }
 
