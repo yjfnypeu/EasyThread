@@ -1,15 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.lzh.easythreadmanager.sample.MainActivity">
 
-    <Button
-        android:onClick="onClick"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
+    <TextView
+        android:text="重置线程名："
+        android:padding="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
-</RelativeLayout>
+    <EditText
+        android:id="@+id/thread_name"
+        android:hint="在此指定子线程任务线程名"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:onClick="onNormalClick"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="启动一个正常子线程任务" />
+
+    <Button
+        android:onClick="onExceptionClick"
+        android:text="启动一个异常子线程任务"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

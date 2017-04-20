@@ -1,13 +1,15 @@
 package com.lzh.easythread;
 
 import java.util.concurrent.Callable;
-
+/**
+ * A Callable Wrapper to delegate {@link Callable#call()}
+ */
 final class CallableWrapper<T> implements Callable<T> {
     private String name;
-    private ErrorCallback callback;
+    private Callback callback;
     private Callable<T> proxy;
 
-    CallableWrapper(String name, ErrorCallback callback, Callable<T> proxy) {
+    CallableWrapper(String name, Callback callback, Callable<T> proxy) {
         this.name = name;
         this.callback = callback;
         this.proxy = proxy;
@@ -15,7 +17,11 @@ final class CallableWrapper<T> implements Callable<T> {
 
     @Override
     public T call() throws Exception {
-        Tools.resetThead(Thread.currentThread(),name,callback);
-        return proxy.call();
+        Tools.resetThread(Thread.currentThread(),name,callback);
+        T t = proxy.call();
+        if (callback != null)  {
+            callback.onCompleted(Thread.currentThread());
+        }
+        return t;
     }
 }

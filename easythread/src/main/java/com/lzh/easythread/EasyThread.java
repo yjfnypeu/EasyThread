@@ -2,7 +2,6 @@ package com.lzh.easythread;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.text.TextUtils;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -12,16 +11,14 @@ import java.util.concurrent.ThreadFactory;
 
 public final class EasyThread {
     private ExecutorService pool;
-    private int defPriority;
     private String defName;
-    private ErrorCallback defCallback;
+    private Callback defCallback;
 
     private String name;
-    private ErrorCallback callback;
+    private Callback callback;
 
-    private EasyThread(int type, int size, int priority, String name, ErrorCallback callback) {
+    private EasyThread(int type, int size, int priority, String name, Callback callback) {
         this.pool = createPool(type, size, priority);
-        this.defPriority = priority;
         this.defName = name;
         this.defCallback = callback;
     }
@@ -31,7 +28,7 @@ public final class EasyThread {
         return this;
     }
 
-    public EasyThread callback (ErrorCallback callback) {
+    public EasyThread callback (Callback callback) {
         this.callback = callback;
         return this;
     }
@@ -53,11 +50,16 @@ public final class EasyThread {
     }
 
     private String getName () {
-        return TextUtils.isEmpty(name) ? defName : name;
+        return Tools.isEmpty(name) ? defName : name;
     }
 
-    private ErrorCallback getCallback () {
-        return new DefaultCallback(callback == null ? defCallback : callback);
+    private Callback getCallback () {
+        Callback used = callback == null ? defCallback : callback;
+        if (Tools.isAndroid) {
+            return new AndroidCallback(used);
+        } else {
+            return used;
+        }
     }
 
     private ExecutorService createPool(int type, int size, int priority) {
@@ -87,20 +89,34 @@ public final class EasyThread {
         }
     }
 
-    private static class DefaultCallback implements ErrorCallback {
+    private static class AndroidCallback implements Callback {
         private static Handler main = new Handler(Looper.getMainLooper());
-        private ErrorCallback delegate;
+        private Callback delegate;
 
-        DefaultCallback(ErrorCallback delegate) {
+        AndroidCallback(Callback delegate) {
             this.delegate = delegate;
         }
 
         @Override
-        public void onError(final Throwable t) {
+        public void onError(final Thread thread, final Throwable t) {
             main.post(new Runnable() {
                 @Override
                 public void run() {
-                    delegate.onError(t);
+                    if (delegate != null) {
+                        delegate.onError(thread, t);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onCompleted(final Thread thread) {
+            main.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (delegate != null) {
+                        delegate.onCompleted(thread);
+                    }
                 }
             });
         }
@@ -115,48 +131,77 @@ public final class EasyThread {
         int size;
         int priority = Thread.NORM_PRIORITY;
         String name;
-        ErrorCallback callback;
+        Callback callback;
 
         private Builder(int size,  int type) {
             this.size = size;
             this.type = type;
         }
 
+        /**
+         * create a cacheable thread manager to used
+         * @return Builder instance
+         */
         public static Builder cacheable () {
             return new Builder(0, TYPE_CACHEABLE);
         }
 
+        /**
+         * create a thread manager with a limit size to used
+         * @param size size
+         * @return Builder instance
+         */
         public static Builder fixed (int size) {
             return new Builder(size, TYPE_FIXED);
         }
 
+        /**
+         * create a thread manager with single thread to used
+         * @return Builder instance
+         */
         public static Builder single () {
             return new Builder(0, TYPE_SINGLE);
         }
 
+        /**
+         * Set a default name for thread manager to used
+         * @return  itself
+         */
         public Builder name (String name) {
-            if (!TextUtils.isEmpty(name)) {
+            if (!Tools.isEmpty(name)) {
                 this.name = name;
             }
             return this;
         }
 
+        /**
+         * Set a default priority for thread manager to used
+         * @return  itself
+         */
         public Builder priority (int priority) {
             this.priority = priority;
             return this;
         }
 
-        public Builder callback (ErrorCallback callback) {
+        /**
+         * Set a default callback for thread manager
+         * @return  itself
+         */
+        public Builder callback (Callback callback) {
             this.callback = callback;
             return this;
         }
 
+        /**
+         * Create a thread manager to used with some configurations.
+         * @return  EasyThread instance
+         */
         public EasyThread build () {
             priority = Math.max(Thread.MIN_PRIORITY, priority);
             priority = Math.min(Thread.MAX_PRIORITY, priority);
 
             size = Math.max(0,size);
-            if (TextUtils.isEmpty(name)) {
+            if (Tools.isEmpty(name)) {
                 // set default thread name
                 switch (type) {
                     case TYPE_CACHEABLE:

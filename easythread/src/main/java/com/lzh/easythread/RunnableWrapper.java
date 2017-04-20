@@ -1,12 +1,15 @@
 package com.lzh.easythread;
 
+/**
+ * A Runnable Wrapper to delegate {@link Runnable#run()}
+ */
 final class RunnableWrapper implements Runnable {
 
     private String name;
-    private ErrorCallback callback;
+    private Callback callback;
     private Runnable proxy;
 
-    RunnableWrapper(String name, ErrorCallback callback, Runnable proxy) {
+    RunnableWrapper(String name, Callback callback, Runnable proxy) {
         this.name = name;
         this.callback = callback;
         this.proxy = proxy;
@@ -14,7 +17,10 @@ final class RunnableWrapper implements Runnable {
 
     @Override
     public void run() {
-        Tools.resetThead(Thread.currentThread(),name,callback);
+        Tools.resetThread(Thread.currentThread(),name,callback);
         proxy.run();
+        if (callback != null)  {
+            callback.onCompleted(Thread.currentThread());
+        }
     }
 }
