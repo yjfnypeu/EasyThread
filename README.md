@@ -30,8 +30,7 @@ compile "com.github.yjfnypeu:EasyThread:$lastestVersion"
     创建EasyThread实例。每个EasyThread实例会持有一个独立的线程池。
 
 ```java
-EasyThread executor = 
-		EasyThread.Builder
+EasyThread executor = EasyThread.Builder
             // 通过此三种方法指定所管理器所需要使用的线程池类型，对应Executors.newXXXThreadPool
             .fixed(2) | .cacheable() | .single()
             .priority(priority) //指定任务执行时所使用的线程优先级
@@ -48,7 +47,10 @@ EasyThread executor =
 executor.name(name)// 可分别对每次的执行任务进行重设线程名
     .callback(callback) // 可分别对每次的执行任务进行重设回调监听
     .execute(runnable) | .submit(callable) // 启动任务
+
 ```
+
+**NOTE:若未在每次使用execute/submit方法启动任务前，对name与callback进行重置，则启动时将会使用默认的(使用Builder创建时设置的)参数执行**
 
 - 线程执行回调监听器
 
