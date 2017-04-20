@@ -26,6 +26,6 @@ dependencies {
     })
 
 //    compile project(':easythread')
-    compile 'com.github.yjfnypeu:EasyThread:0.1'
+    compile 'com.github.yjfnypeu:EasyThread:0.2'
     testCompile 'junit:junit:4.12'
 }
