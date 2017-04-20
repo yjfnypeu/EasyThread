@@ -17,4 +17,10 @@ public interface Callback {
      * @param thread The running thread
      */
     void onCompleted (Thread thread);
+
+    /**
+     * notify user that task start running
+     * @param thread The running thread
+     */
+    void onStart (Thread thread);
 }

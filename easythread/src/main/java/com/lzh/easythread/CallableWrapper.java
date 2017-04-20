@@ -17,6 +17,9 @@ final class CallableWrapper<T> implements Callable<T> {
 
     @Override
     public T call() throws Exception {
+        if (callback != null) {
+            callback.onStart(Thread.currentThread());
+        }
         Tools.resetThread(Thread.currentThread(),name,callback);
         T t = proxy.call();
         if (callback != null)  {

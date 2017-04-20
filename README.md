@@ -1,7 +1,10 @@
 # EasyThread
 <a href="http://www.methodscount.com/?lib=com.github.yjfnypeu%3AEasyThread%3A0.1"><img src="https://img.shields.io/badge/Methods count-61-e91e63.svg"/></a>
 
-一款简单易用的线程池管理器
+一款简单超轻量级的线程池管理器
+
+- 为什么会需要此
+
 
 ### 依赖
 
@@ -48,6 +51,11 @@ ThreadCallback implements Callback {
         @Override
         public void onCompleted(Thread thread) {
             // 当使用EasyThread启动后台任务后，若子线程运行完毕。将会回调到此方法中通知用户
+        }
+
+        @Override
+        public void onStart(Thread thread) {
+            // 当子线程启动运行时，回调到此方法通知用户。
         }
     }
 ```

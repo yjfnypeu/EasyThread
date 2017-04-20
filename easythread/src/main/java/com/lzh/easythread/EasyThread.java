@@ -120,6 +120,18 @@ public final class EasyThread {
                 }
             });
         }
+
+        @Override
+        public void onStart(final Thread thread) {
+            main.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (delegate != null) {
+                        delegate.onStart(thread);
+                    }
+                }
+            });
+        }
     }
 
     public static class Builder {
