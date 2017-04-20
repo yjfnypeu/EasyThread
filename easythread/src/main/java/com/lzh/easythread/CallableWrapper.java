@@ -17,11 +17,13 @@ final class CallableWrapper<T> implements Callable<T> {
 
     @Override
     public T call() throws Exception {
+        Tools.resetThread(Thread.currentThread(),name,callback);
         if (callback != null) {
             callback.onStart(Thread.currentThread());
         }
-        Tools.resetThread(Thread.currentThread(),name,callback);
-        T t = proxy.call();
+
+        // avoid NullPointException
+        T t = proxy == null ? null : proxy.call();
         if (callback != null)  {
             callback.onCompleted(Thread.currentThread());
         }

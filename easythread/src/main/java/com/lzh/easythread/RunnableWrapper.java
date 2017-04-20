@@ -17,11 +17,14 @@ final class RunnableWrapper implements Runnable {
 
     @Override
     public void run() {
+        Tools.resetThread(Thread.currentThread(),name,callback);
         if (callback != null) {
             callback.onStart(Thread.currentThread());
         }
-        Tools.resetThread(Thread.currentThread(),name,callback);
-        proxy.run();
+        // avoid NullPointException
+        if (proxy != null) {
+            proxy.run();
+        }
         if (callback != null)  {
             callback.onCompleted(Thread.currentThread());
         }
