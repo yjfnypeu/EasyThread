@@ -3,6 +3,10 @@ package com.example;
 import com.lzh.easythread.Callback;
 import com.lzh.easythread.EasyThread;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 public class EasyThreadTest {
 
     public static void main(String[] args) {
@@ -38,5 +42,23 @@ public class EasyThreadTest {
                 throw new RuntimeException("故意的");
             }
         });
+
+        EasyThread pool = EasyThread.Builder.single().name("TestSubmit").build();
+        Future<Integer> submit = pool.submit(new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                Thread.sleep(1000);
+                return 10;
+            }
+        });
+
+        int result;
+        try {
+            result = submit.get(2, TimeUnit.SECONDS);
+        } catch (Throwable e) {
+            result = 0;
+        }
+
+        System.out.println("result = " + result);
     }
 }

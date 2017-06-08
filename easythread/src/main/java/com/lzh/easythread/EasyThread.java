@@ -7,15 +7,18 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
-public final class EasyThread {
+public final class EasyThread{
     private ExecutorService pool;
     private String defName;
     private Callback defCallback;
 
     private String name;
     private Callback callback;
+    private long delay;
 
     private EasyThread(int type, int size, int priority, String name, Callback callback) {
         this.pool = createPool(type, size, priority);
@@ -33,20 +36,35 @@ public final class EasyThread {
         return this;
     }
 
+    public EasyThread delay (long time, TimeUnit unit) {
+        delay = unit.toMillis(time);
+        return this;
+    }
+
     public void execute (Runnable runnable) {
-        pool.execute(new RunnableWrapper(getName(), getCallback(), runnable));
+        if (delay > 0 && pool instanceof ScheduledExecutorService) {
+            ((ScheduledExecutorService)pool).schedule(runnable, delay, TimeUnit.MILLISECONDS);
+        } else {
+            pool.execute(new RunnableWrapper(getName(), getCallback(), runnable));
+        }
         release();
     }
 
     public <T> Future<T> submit (Callable<T> callable) {
-        Future<T> future = pool.submit(new CallableWrapper<>(getName() ,getCallback(),callable));
+        Future<T> result;
+        if (delay > 0 && pool instanceof ScheduledExecutorService) {
+            result = ((ScheduledExecutorService)pool).schedule(callable, delay, TimeUnit.MILLISECONDS);
+        } else {
+            result = pool.submit(new CallableWrapper<>(getName() ,getCallback(),callable));
+        }
         release();
-        return future;
+        return result;
     }
 
     private void release() {
         this.name = null;
         this.callback = null;
+        this.delay = -1;
     }
 
     private String getName () {
@@ -68,6 +86,8 @@ public final class EasyThread {
                 return Executors.newCachedThreadPool(new DefaultFactory(priority));
             case Builder.TYPE_FIXED:
                 return Executors.newFixedThreadPool(size, new DefaultFactory(priority));
+            case Builder.TYPE_SCHEDULED:
+                return Executors.newScheduledThreadPool(size, new DefaultFactory(priority));
             case Builder.TYPE_SINGLE:
             default:
                 return Executors.newSingleThreadExecutor(new DefaultFactory(priority));
@@ -138,6 +158,7 @@ public final class EasyThread {
         final static int TYPE_CACHEABLE = 0;
         final static int TYPE_FIXED = 1;
         final static int TYPE_SINGLE = 2;
+        final static int TYPE_SCHEDULED = 3;
 
         int type;
         int size;
@@ -165,6 +186,10 @@ public final class EasyThread {
          */
         public static Builder fixed (int size) {
             return new Builder(size, TYPE_FIXED);
+        }
+
+        public static Builder scheduled (int size) {
+            return new Builder(size, TYPE_SCHEDULED);
         }
 
         /**
@@ -227,6 +252,7 @@ public final class EasyThread {
                         break;
                 }
             }
+
             return new EasyThread(type,size,priority,name,callback);
         }
     }

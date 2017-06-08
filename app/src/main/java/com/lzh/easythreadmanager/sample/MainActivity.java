@@ -13,6 +13,7 @@ import com.lzh.easythread.Callback;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends Activity {
 
@@ -33,6 +34,8 @@ public class MainActivity extends Activity {
     }
 
     public void onNormalClick (View v) {
+
+
         executor.name(editText.getText().toString())
                 .callback(new ThreadCallback())
                 .execute(new Runnable() {
@@ -54,11 +57,9 @@ public class MainActivity extends Activity {
                     }
                 });
         try {
-            User user = submit.get();
+            User user = submit.get(1, TimeUnit.SECONDS);
             System.out.println(user);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
@@ -84,6 +85,11 @@ public class MainActivity extends Activity {
         @Override
         public void onCompleted(Thread thread) {
             Toast.makeText(MainActivity.this, String.format("线程%s运行完毕", thread),Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onStart(Thread thread) {
+
         }
     }
 }
