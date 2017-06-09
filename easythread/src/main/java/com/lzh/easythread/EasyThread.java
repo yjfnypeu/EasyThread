@@ -202,6 +202,7 @@ public final class EasyThread{
 
         /**
          * Set a default name for thread manager to used
+         * @param name The thread name.
          * @return  itself
          */
         public Builder name (String name) {
@@ -213,6 +214,7 @@ public final class EasyThread{
 
         /**
          * Set a default priority for thread manager to used
+         * @param priority The thread priority
          * @return  itself
          */
         public Builder priority (int priority) {
@@ -222,6 +224,7 @@ public final class EasyThread{
 
         /**
          * Set a default callback for thread manager
+         * @param callback The callback
          * @return  itself
          */
         public Builder callback (Callback callback) {

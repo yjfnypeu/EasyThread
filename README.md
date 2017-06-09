@@ -1,4 +1,4 @@
-# EasyThread
+# EasyThread ![ci](https://travis-ci.org/yjfnypeu/EasyThread.svg?branch=master)
 <a href="http://www.methodscount.com/?lib=com.github.yjfnypeu%3AEasyThread%3A0.1"><img src="https://img.shields.io/badge/Methods count-61-e91e63.svg"/></a>
 
 一款安全、轻巧、简单的线程池管理器
@@ -29,7 +29,7 @@ compile "com.github.yjfnypeu:EasyThread:$lastestVersion"
 
     创建EasyThread实例。每个EasyThread实例会持有一个独立的线程池。
 
-```java
+```
 EasyThread executor = EasyThread.Builder
             // 通过此三种方法指定所管理器所需要使用的线程池类型，对应Executors.newXXXThreadPool
             .fixed(2) | .cacheable() | .single()
@@ -43,7 +43,7 @@ EasyThread executor = EasyThread.Builder
 
 	使用创建的EasyThread实例进行任务执行：
 
-```java
+```
 executor.name(name)// 可分别对每次的执行任务进行重设线程名
     .callback(callback) // 可分别对每次的执行任务进行重设回调监听
     .execute(runnable) | .submit(callable) // 启动任务
@@ -58,7 +58,7 @@ executor.name(name)// 可分别对每次的执行任务进行重设线程名
 	1. 当在纯java环境下使用时，回调函数所处线程与任务执行线程一致。
 	2. 当在Android环境下使用时，回调函数所处线程为主线程。
 
-```java
+```
 ThreadCallback implements Callback {
 
     @Override
