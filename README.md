@@ -1,4 +1,4 @@
-# EasyThread ![ci](https://travis-ci.org/yjfnypeu/EasyThread.svg?branch=master)
+# EasyThread ![travis-ci](https://travis-ci.org/yjfnypeu/EasyThread.svg?branch=master)
 <a href="http://www.methodscount.com/?lib=com.github.yjfnypeu%3AEasyThread%3A0.1"><img src="https://img.shields.io/badge/Methods count-61-e91e63.svg"/></a>
 
 一款安全、轻巧、简单的线程池管理器
