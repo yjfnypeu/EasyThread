@@ -18,8 +18,6 @@ package com.lzh.easythread;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.sun.istack.internal.NotNull;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -31,12 +29,12 @@ import java.util.concurrent.TimeUnit;
 
 public final class EasyThread implements Executor{
     private ExecutorService pool;
-    private String defName;
-    private Callback defCallback;
+    private String defName;// default thread name.
+    private Callback defCallback;// default thread callback.
 
-    private String name;
-    private Callback callback;
-    private long delay;
+    private String name;// a temp thread name. just used for current task.
+    private Callback callback;// a temp thread callback. just used for current task.
+    private long delay;// the delay time for current task. only the task is created with type of scheduled. it will be worked.
 
     private EasyThread(int type, int size, int priority, String name, Callback callback) {
         this.pool = createPool(type, size, priority);
@@ -191,29 +189,35 @@ public final class EasyThread implements Executor{
         }
 
         /**
-         * create a cacheable thread manager to used
-         * @return Builder instance
+         * Create a cacheable thread manager to used:<b>Executors.newCachedThreadPool()</b>
+         * @return Builder itself
          */
         public static Builder cacheable () {
             return new Builder(0, TYPE_CACHEABLE);
         }
 
         /**
-         * create a thread manager with a limit size to used
+         * Create a thread manager with a limit size to used:<b>Executors.newFixedThreadPool()</b>
          * @param size size
-         * @return Builder instance
+         * @return Builder itself
          */
         public static Builder fixed (int size) {
             return new Builder(size, TYPE_FIXED);
         }
 
+        /**
+         * Create a thread manager with a scheduled thread pool: <b>Executors.newScheduledThreadPool()</b>
+         * @param size Thread size.
+         * @return Builder itself
+         */
         public static Builder scheduled (int size) {
             return new Builder(size, TYPE_SCHEDULED);
         }
 
         /**
          * create a thread manager with single thread to used
-         * @return Builder instance
+         *
+         * @return Builder itself
          */
         public static Builder single () {
             return new Builder(0, TYPE_SINGLE);
@@ -222,7 +226,7 @@ public final class EasyThread implements Executor{
         /**
          * Set a default name for thread manager to used
          * @param name The thread name.
-         * @return  itself
+         * @return Builder itself
          */
         public Builder name (String name) {
             if (!Tools.isEmpty(name)) {
