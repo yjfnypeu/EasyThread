@@ -120,6 +120,17 @@ EasyThrea.Builder.scheduled(size)
 easyThread.delay(time, unit);
 ```
 
+**e.g 延迟3秒启动执行任务**
+
+```
+EasyThread easyThread = EasyThread.Builder.scheduled(1)
+            ...
+            build();
+            
+easyThread.delay(3, TimeUnit.SECONDS)
+        .execute(task);
+```
+
 **NOTE:若未在每次启动任务前，对name与callback进行重置，则启动时将会使用默认的(使用Builder创建时设置的)参数执行**
 
 - 线程执行回调监听器
