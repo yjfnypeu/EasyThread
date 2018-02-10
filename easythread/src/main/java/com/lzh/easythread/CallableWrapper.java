@@ -16,9 +16,7 @@
 package com.lzh.easythread;
 
 import java.util.concurrent.Callable;
-/**
- * A Callable Wrapper to delegate {@link Callable#call()}
- */
+
 final class CallableWrapper<T> implements Callable<T> {
     private String name;
     private Callback callback;

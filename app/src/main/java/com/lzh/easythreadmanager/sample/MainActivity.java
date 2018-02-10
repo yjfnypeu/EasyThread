@@ -2,11 +2,13 @@ package com.lzh.easythreadmanager.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.lzh.easythread.AsyncCallback;
 import com.lzh.easythread.EasyThread;
 import com.lzh.easythread.Callback;
 
@@ -29,15 +31,13 @@ public class MainActivity extends Activity {
         executor = EasyThread.Builder
                 .fixed(2)
                 .priority(Thread.MAX_PRIORITY)
-                .name("thread name")
+                .name("default thread name")
                 .build();
     }
 
     public void onNormalClick (View v) {
-
-
-        executor.name(editText.getText().toString())
-                .callback(new ThreadCallback())
+        resetThreadName();
+        executor.callback(new ThreadCallback())
                 .execute(new Runnable() {
                     @Override
                     public void run() {
@@ -45,9 +45,22 @@ public class MainActivity extends Activity {
                     }
                 });
 
-        Future<User> submit = executor.name("test submit")
+        AsyncCallback<User> async = new AsyncCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                System.out.println("user = [" + user + "]");
+            }
+
+            @Override
+            public void onFailed(Throwable t) {
+                System.out.println("t = [" + t + "]");
+            }
+        };
+
+        executor.name("test submit")
                 .callback(new ThreadCallback())
-                .submit(new Callable<User>() {
+                // 使用异步任务
+                .async(new Callable<User>() {
                     @Override
                     public User call() throws Exception {
                         User user = new User();
@@ -55,18 +68,12 @@ public class MainActivity extends Activity {
                         user.password = "123456";
                         return user;
                     }
-                });
-        try {
-            User user = submit.get(1, TimeUnit.SECONDS);
-            System.out.println(user);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+                }, async);
     }
 
     public void onExceptionClick (View v) {
-        executor.name(editText.getText().toString())
-                .callback(new ThreadCallback())
+        resetThreadName();
+        executor.callback(new ThreadCallback())
                 .execute(new Runnable() {
                     @Override
                     public void run() {
@@ -90,6 +97,13 @@ public class MainActivity extends Activity {
         @Override
         public void onStart(Thread thread) {
 
+        }
+    }
+
+    private void resetThreadName() {
+        String name = editText.getText().toString();
+        if (!TextUtils.isEmpty(name)) {
+            executor.name(name);
         }
     }
 }

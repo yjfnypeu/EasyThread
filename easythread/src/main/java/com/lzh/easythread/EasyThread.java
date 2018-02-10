@@ -15,9 +15,6 @@
  */
 package com.lzh.easythread;
 
-import android.os.Handler;
-import android.os.Looper;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -29,72 +26,140 @@ import java.util.concurrent.TimeUnit;
 
 public final class EasyThread implements Executor{
     private ExecutorService pool;
-    private String defName;// default thread name.
-    private Callback defCallback;// default thread callback.
+    // ==== There are default configs
+    private String defName;// default thread name
+    private Callback defCallback;// default thread callback
+    private Executor defDeliver;// default thread deliver
 
-    private String name;// a temp thread name. just used for current task.
-    private Callback callback;// a temp thread callback. just used for current task.
-    private long delay;// the delay time for current task. only the task is created with type of scheduled. it will be worked.
+    // ==== There are temp configs(once)
+    private String name;// thread name
+    private Callback callback;// thread callback
+    private long delay;// delay time
+    private Executor deliver;// thread deliver
 
-    private EasyThread(int type, int size, int priority, String name, Callback callback) {
+    private EasyThread(int type, int size, int priority, String name, Callback callback, Executor deliver) {
         this.pool = createPool(type, size, priority);
         this.defName = name;
         this.defCallback = callback;
+        this.defDeliver = deliver;
     }
 
+    /**
+     * Set thread name for current task. if not set. the default name should be used.
+     * @param name thread name
+     * @return EasyThread
+     */
     public EasyThread name (String name) {
         this.name = name;
         return this;
     }
 
+    /**
+     * Set thread callback for current task, if not set, the default callback should be used.
+     * @param callback thread callback
+     * @return EasyThread
+     */
     public EasyThread callback (Callback callback) {
         this.callback = callback;
         return this;
     }
 
+    /**
+     * Set the delay time for current task.
+     *
+     * <p>Attention: it only take effects when your thread pool is create by {@link Builder#scheduled(int)}</p>
+     * @param time time length
+     * @param unit time unit
+     * @return EasyThread
+     */
     public EasyThread delay (long time, TimeUnit unit) {
         delay = unit.toMillis(time);
         return this;
     }
 
+    /**
+     * Set the thread deliver for current task. if not set, the default deliver should be used.
+     * @param deliver thread deliver
+     * @return EasyThread
+     */
+    public EasyThread deliver(Executor deliver){
+        this.deliver = deliver;
+        return this;
+    }
+
+    /**
+     * Launch task
+     * @param runnable task
+     */
     @Override
     public void execute (Runnable runnable) {
+        runnable = new RunnableWrapper(getName(), getCallback(null)).setRunnable(runnable);
         if (delay > 0 && pool instanceof ScheduledExecutorService) {
             ((ScheduledExecutorService)pool).schedule(runnable, delay, TimeUnit.MILLISECONDS);
         } else {
-            pool.execute(new RunnableWrapper(getName(), getCallback(), runnable));
+            pool.execute(runnable);
         }
         release();
     }
 
+    /**
+     * Launch async task, and the callback are used for receive the result of callable task.
+     * @param callable callable
+     * @param callback callback
+     * @param <T> type
+     */
+    public <T> void async(Callable<T> callable, AsyncCallback<T> callback) {
+        Runnable runnable = new RunnableWrapper(getName(), getCallback(callback))
+                .setCallable(callable);
+        if (delay > 0 && pool instanceof ScheduledExecutorService) {
+            ((ScheduledExecutorService)pool).schedule(runnable, delay, TimeUnit.MILLISECONDS);
+        } else {
+            pool.execute(runnable);
+        }
+        release();
+    }
+
+    /**
+     * Launch task
+     * @param callable callable
+     * @param <T> type
+     * @return {@link Future}
+     */
     public <T> Future<T> submit (Callable<T> callable) {
         Future<T> result;
+        callable = new CallableWrapper<>(getName() ,getCallback(null),callable);
         if (delay > 0 && pool instanceof ScheduledExecutorService) {
             result = ((ScheduledExecutorService)pool).schedule(callable, delay, TimeUnit.MILLISECONDS);
         } else {
-            result = pool.submit(new CallableWrapper<>(getName() ,getCallback(),callable));
+            result = pool.submit(callable);
         }
         release();
         return result;
+    }
+
+    /**
+     * get thread pool that be created.
+     * @return thread pool
+     */
+    public ExecutorService getExecutor() {
+        return pool;
     }
 
     private void release() {
         this.name = null;
         this.callback = null;
         this.delay = -1;
+        this.deliver = null;
     }
 
     private String getName () {
         return Tools.isEmpty(name) ? defName : name;
     }
 
-    private Callback getCallback () {
-        Callback used = callback == null ? defCallback : callback;
-        if (Tools.isAndroid) {
-            return new AndroidCallback(used);
-        } else {
-            return used;
-        }
+    private CallbackDelegate getCallback (AsyncCallback async) {
+        Callback used = this.callback == null ? defCallback : callback;
+        Executor deliver = this.deliver == null ? defDeliver : this.deliver;
+        return new CallbackDelegate(used, deliver, async);
     }
 
     private ExecutorService createPool(int type, int size, int priority) {
@@ -126,51 +191,6 @@ public final class EasyThread implements Executor{
         }
     }
 
-    private static class AndroidCallback implements Callback {
-        private static Handler main = new Handler(Looper.getMainLooper());
-        private Callback delegate;
-
-        AndroidCallback(Callback delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public void onError(final Thread thread, final Throwable t) {
-            main.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (delegate != null) {
-                        delegate.onError(thread, t);
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void onCompleted(final Thread thread) {
-            main.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (delegate != null) {
-                        delegate.onCompleted(thread);
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void onStart(final Thread thread) {
-            main.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (delegate != null) {
-                        delegate.onStart(thread);
-                    }
-                }
-            });
-        }
-    }
-
     public static class Builder {
         final static int TYPE_CACHEABLE = 0;
         final static int TYPE_FIXED = 1;
@@ -182,14 +202,15 @@ public final class EasyThread implements Executor{
         int priority = Thread.NORM_PRIORITY;
         String name;
         Callback callback;
+        Executor deliver;
 
         private Builder(int size,  int type) {
-            this.size = size;
+            this.size = Math.max(1, size);
             this.type = type;
         }
 
         /**
-         * Create a cacheable thread manager to used:<b>Executors.newCachedThreadPool()</b>
+         * Create thread pool by <b>Executors.newCachedThreadPool()</b>
          * @return Builder itself
          */
         public static Builder cacheable () {
@@ -197,8 +218,8 @@ public final class EasyThread implements Executor{
         }
 
         /**
-         * Create a thread manager with a limit size to used:<b>Executors.newFixedThreadPool()</b>
-         * @param size size
+         * Create thread pool by <b>Executors.newFixedThreadPool()</b>
+         * @param size thread size
          * @return Builder itself
          */
         public static Builder fixed (int size) {
@@ -206,8 +227,8 @@ public final class EasyThread implements Executor{
         }
 
         /**
-         * Create a thread manager with a scheduled thread pool: <b>Executors.newScheduledThreadPool()</b>
-         * @param size Thread size.
+         * Create thread pool by <b>Executors.newScheduledThreadPool()</b>
+         * @param size thread size
          * @return Builder itself
          */
         public static Builder scheduled (int size) {
@@ -215,7 +236,7 @@ public final class EasyThread implements Executor{
         }
 
         /**
-         * create a thread manager with single thread to used
+         * Create thread pool by <b>Executors.newSingleThreadPool()</b>
          *
          * @return Builder itself
          */
@@ -224,8 +245,8 @@ public final class EasyThread implements Executor{
         }
 
         /**
-         * Set a default name for thread manager to used
-         * @param name The thread name.
+         * Set default thread name to used.
+         * @param name default thread name
          * @return Builder itself
          */
         public Builder name (String name) {
@@ -236,8 +257,8 @@ public final class EasyThread implements Executor{
         }
 
         /**
-         * Set a default priority for thread manager to used
-         * @param priority The thread priority
+         * Set default thread priority to used.
+         * @param priority thread priority
          * @return  itself
          */
         public Builder priority (int priority) {
@@ -246,12 +267,22 @@ public final class EasyThread implements Executor{
         }
 
         /**
-         * Set a default callback for thread manager
-         * @param callback The callback
-         * @return  itself
+         * Set default thread callback to used.
+         * @param callback thread callback
+         * @return itself
          */
         public Builder callback (Callback callback) {
             this.callback = callback;
+            return this;
+        }
+
+        /**
+         * Set default thread deliver to used.
+         * @param deliver default thread deliver
+         * @return itself
+         */
+        public Builder deliver (Executor deliver) {
+            this.deliver = deliver;
             return this;
         }
 
@@ -279,7 +310,15 @@ public final class EasyThread implements Executor{
                 }
             }
 
-            return new EasyThread(type,size,priority,name,callback);
+            if (deliver == null) {
+                if (Tools.isAndroid) {
+                    deliver = AndroidMainExecutor.getInstance();
+                } else {
+                    deliver = NotSwitchExecutor.getInstance();
+                }
+            }
+
+            return new EasyThread(type, size, priority, name, callback, deliver);
         }
     }
 }

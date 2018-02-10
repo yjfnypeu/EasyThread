@@ -1,5 +1,6 @@
 package com.example;
 
+import com.lzh.easythread.AsyncCallback;
 import com.lzh.easythread.Callback;
 import com.lzh.easythread.EasyThread;
 
@@ -60,5 +61,22 @@ public class EasyThreadTest {
         }
 
         System.out.println("result = " + result);
+
+        easyThread.async(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return "async task result";
+            }
+        }, new AsyncCallback<String>() {
+            @Override
+            public void onSuccess(String response) {
+                System.out.println("response = [" + response + "]");
+            }
+
+            @Override
+            public void onFailed(Throwable t) {
+                System.out.println("t = [" + t + "]");
+            }
+        });
     }
 }

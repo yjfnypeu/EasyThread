@@ -17,7 +17,7 @@ package com.lzh.easythread;
 
 final class Tools {
 
-    static boolean isAndroid;
+    static boolean isAndroid;// Flag: is on android platform
 
     /**
      * Reset thread name and set a UnCaughtExceptionHandler to wrap callback to notify user when occurs a exception

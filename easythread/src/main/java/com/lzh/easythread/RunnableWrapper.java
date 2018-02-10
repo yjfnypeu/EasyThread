@@ -15,33 +15,47 @@
  */
 package com.lzh.easythread;
 
-/**
- * A Runnable Wrapper to delegate {@link Runnable#run()}
- */
+import java.util.concurrent.Callable;
+
 final class RunnableWrapper implements Runnable {
 
     private String name;
-    private Callback callback;
-    private Runnable proxy;
+    private CallbackDelegate delegate;
+    private Runnable runnable;
+    private Callable callable;
 
-    RunnableWrapper(String name, Callback callback, Runnable proxy) {
+    RunnableWrapper(String name, CallbackDelegate callback) {
         this.name = name;
-        this.callback = callback;
-        this.proxy = proxy;
+        this.delegate = callback;
+    }
+
+    RunnableWrapper setRunnable(Runnable runnable) {
+        this.runnable = runnable;
+        return this;
+    }
+
+    RunnableWrapper setCallable(Callable callable) {
+        this.callable = callable;
+        return this;
     }
 
     @Override
     public void run() {
-        Tools.resetThread(Thread.currentThread(),name,callback);
-        if (callback != null) {
-            callback.onStart(Thread.currentThread());
-        }
+        Thread current = Thread.currentThread();
+        Tools.resetThread(current, name, delegate);
+        delegate.onStart(current);
+
         // avoid NullPointException
-        if (proxy != null) {
-            proxy.run();
+        if (runnable != null) {
+            runnable.run();
+        } else if (callable != null) {
+            try {
+                Object result = callable.call();
+                delegate.onSuccess(result);
+            } catch (Exception e) {
+                delegate.onError(current, e);
+            }
         }
-        if (callback != null)  {
-            callback.onCompleted(Thread.currentThread());
-        }
+        delegate.onCompleted(current);
     }
 }
