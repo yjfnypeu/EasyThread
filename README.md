@@ -30,7 +30,7 @@ compile "com.github.yjfnypeu:EasyThread:$lastestVersion"
     创建EasyThread实例。每个EasyThread实例会持有一个独立的线程池。
 
 ```
-EasyThread executor = EasyThread.Builder
+EasyThread easyThread = EasyThread.Builder
             // 通过此三种方法指定所管理器所需要使用的线程池类型，对应Executors.newXXXThreadPool
             .fixed(2) | .cacheable() | .single()
             .priority(priority) //指定任务执行时所使用的线程优先级
@@ -44,10 +44,76 @@ EasyThread executor = EasyThread.Builder
 	使用创建的EasyThread实例进行任务执行：
 
 ```
-executor.name(name)// 可分别对每次的执行任务进行重设线程名
+easyThread.name(name)// 可分别对每次的执行任务进行重设线程名
     .callback(callback) // 可分别对每次的执行任务进行重设回调监听
-    .execute(runnable) | .submit(callable) // 启动任务
+    .execute(runnable) | .submit(callable) | .async(callable, asyncCallback)// 启动任务
+```
 
+EasyThread支持执行三种任务：
+
+#### 1. 普通Runnable任务
+
+```
+easyThread.execute(new Runnable(){
+    @Override
+    public void run() {
+        // do something.
+    }
+});
+```
+
+#### 2. 普通Callable任务
+
+```
+Future task = easyThread.submit(new Callback<User>(){
+    @Override
+    public void call() throws Exception {
+        // do something
+        return user;
+    }
+})
+User result = task.get();
+```
+#### 3. 异步回调任务
+
+```
+Callback<User> callable = new Callback<User>(){
+    @Override
+    public void call() throws Exception {
+        // do something
+        return user;
+    }
+}
+
+AsyncCallback<User> async = new AsyncCallback<User>() {
+    @Override
+    public void onSuccess(User user) {
+        // notify success;
+    }
+
+    @Override
+    public void onFailed(Throwable t) {
+        // notify failed.
+    }
+};
+
+easyThread.async(callable, async)
+```
+
+#### 4. 延迟后台任务
+
+当你使用以下方法进行的easyThread创建时，才可使用延迟任务：
+
+```
+EasyThrea.Builder.scheduled(size)
+        ...
+        build();
+```
+
+然后若需要延迟执行时，在启动之前调用下面这个方法即可：
+
+```
+easyThread.delay(time, unit);
 ```
 
 **NOTE:若未在每次使用execute/submit方法启动任务前，对name与callback进行重置，则启动时将会使用默认的(使用Builder创建时设置的)参数执行**
