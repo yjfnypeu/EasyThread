@@ -77,6 +77,7 @@ User result = task.get();
 #### 3. 异步回调任务
 
 ```
+// 异步执行任务
 Callback<User> callable = new Callback<User>(){
     @Override
     public void call() throws Exception {
@@ -85,6 +86,7 @@ Callback<User> callable = new Callback<User>(){
     }
 }
 
+// 异步回调
 AsyncCallback<User> async = new AsyncCallback<User>() {
     @Override
     public void onSuccess(User user) {
@@ -97,6 +99,7 @@ AsyncCallback<User> async = new AsyncCallback<User>() {
     }
 };
 
+// 启动异步任务
 easyThread.async(callable, async)
 ```
 
@@ -116,7 +119,7 @@ EasyThrea.Builder.scheduled(size)
 easyThread.delay(time, unit);
 ```
 
-**NOTE:若未在每次使用execute/submit方法启动任务前，对name与callback进行重置，则启动时将会使用默认的(使用Builder创建时设置的)参数执行**
+**NOTE:若未在每次启动任务前，对name与callback进行重置，则启动时将会使用默认的(使用Builder创建时设置的)参数执行**
 
 - 线程执行回调监听器
 
