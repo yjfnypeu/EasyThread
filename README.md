@@ -79,7 +79,7 @@ User result = task.get();
 
 ```
 // 异步执行任务
-Callback<User> callable = new Callback<User>(){
+Callable<User> callable = new Callable<User>(){
     @Override
     public void call() throws Exception {
         // do something
