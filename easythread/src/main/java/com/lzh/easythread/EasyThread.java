@@ -93,12 +93,8 @@ public final class EasyThread implements Executor{
      */
     @Override
     public void execute (Runnable runnable) {
-        runnable = new RunnableWrapper(getName(), getCallback(null)).setRunnable(runnable);
-        if (delay > 0 && pool instanceof ScheduledExecutorService) {
-            ((ScheduledExecutorService)pool).schedule(runnable, delay, TimeUnit.MILLISECONDS);
-        } else {
-            pool.execute(runnable);
-        }
+        runnable = new RunnableWrapper(getName(), delay, getCallback(null)).setRunnable(runnable);
+        pool.execute(runnable);
         release();
     }
 
@@ -109,13 +105,9 @@ public final class EasyThread implements Executor{
      * @param <T> type
      */
     public <T> void async(Callable<T> callable, AsyncCallback<T> callback) {
-        Runnable runnable = new RunnableWrapper(getName(), getCallback(callback))
+        Runnable runnable = new RunnableWrapper(getName(), delay, getCallback(callback))
                 .setCallable(callable);
-        if (delay > 0 && pool instanceof ScheduledExecutorService) {
-            ((ScheduledExecutorService)pool).schedule(runnable, delay, TimeUnit.MILLISECONDS);
-        } else {
-            pool.execute(runnable);
-        }
+        pool.execute(runnable);
         release();
     }
 
@@ -127,12 +119,8 @@ public final class EasyThread implements Executor{
      */
     public <T> Future<T> submit (Callable<T> callable) {
         Future<T> result;
-        callable = new CallableWrapper<>(getName() ,getCallback(null),callable);
-        if (delay > 0 && pool instanceof ScheduledExecutorService) {
-            result = ((ScheduledExecutorService)pool).schedule(callable, delay, TimeUnit.MILLISECONDS);
-        } else {
-            result = pool.submit(callable);
-        }
+        callable = new CallableWrapper<>(getName(), delay, getCallback(null),callable);
+        result = pool.submit(callable);
         release();
         return result;
     }

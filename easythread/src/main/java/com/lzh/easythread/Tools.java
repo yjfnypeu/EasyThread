@@ -37,6 +37,18 @@ final class Tools {
         thread.setName(name);
     }
 
+    static void sleepThread(long time) {
+        if (time <= 0) {
+            return;
+        }
+
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Thread has been interrupted", e);
+        }
+    }
+
     static boolean isEmpty(CharSequence data) {
         return data == null || data.length() == 0;
     }

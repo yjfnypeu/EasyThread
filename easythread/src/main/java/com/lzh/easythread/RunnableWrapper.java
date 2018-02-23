@@ -23,10 +23,12 @@ final class RunnableWrapper implements Runnable {
     private CallbackDelegate delegate;
     private Runnable runnable;
     private Callable callable;
+    private long delay;
 
-    RunnableWrapper(String name, CallbackDelegate callback) {
+    RunnableWrapper(String name, long delay, CallbackDelegate callback) {
         this.name = name;
         this.delegate = callback;
+        this.delay = delay;
     }
 
     RunnableWrapper setRunnable(Runnable runnable) {
@@ -43,6 +45,7 @@ final class RunnableWrapper implements Runnable {
     public void run() {
         Thread current = Thread.currentThread();
         Tools.resetThread(current, name, delegate);
+        Tools.sleepThread(delay);
         delegate.onStart(current);
 
         // avoid NullPointException

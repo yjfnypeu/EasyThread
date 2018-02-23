@@ -5,6 +5,7 @@
 
 ### 特性
 
+- **极致精简**:方法数不过百
 - 可重命名线程名。方便出错后定位问题。
 - 当线程出现异常。能自动将catch异常信息传递给用户，避免程序崩溃。
 - 当任务启动时与任务运行完毕后。有分别的生命周期作为通知。
@@ -28,7 +29,7 @@ compile "com.github.yjfnypeu:EasyThread:$lastestVersion"
 
 - 第一步：
 
-    创建EasyThread实例。每个EasyThread实例会持有一个独立的线程池。
+创建EasyThread实例。每个EasyThread实例会持有一个独立的线程池。
 
 ```
 EasyThread easyThread = EasyThread.Builder
@@ -42,7 +43,7 @@ EasyThread easyThread = EasyThread.Builder
 
 - 第二步：
 
-	使用创建的EasyThread实例进行任务执行：
+使用创建的EasyThread实例进行任务执行：
 
 ```
 easyThread.name(name)// 可分别对每次的执行任务进行重设线程名

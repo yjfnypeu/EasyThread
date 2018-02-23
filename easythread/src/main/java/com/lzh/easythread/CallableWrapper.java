@@ -21,16 +21,19 @@ final class CallableWrapper<T> implements Callable<T> {
     private String name;
     private Callback callback;
     private Callable<T> proxy;
+    private long delay;
 
-    CallableWrapper(String name, Callback callback, Callable<T> proxy) {
+    CallableWrapper(String name, long delay, Callback callback, Callable<T> proxy) {
         this.name = name;
         this.callback = callback;
         this.proxy = proxy;
+        this.delay = delay;
     }
 
     @Override
     public T call() throws Exception {
         Tools.resetThread(Thread.currentThread(),name,callback);
+        Tools.sleepThread(delay);
         if (callback != null) {
             callback.onStart(Thread.currentThread());
         }

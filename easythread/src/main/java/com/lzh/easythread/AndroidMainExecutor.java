@@ -5,6 +5,10 @@ import android.os.Looper;
 
 import java.util.concurrent.Executor;
 
+/**
+ * Adapter for <b>Android platform</b>.
+ * @author haoge
+ */
 final class AndroidMainExecutor implements Executor {
 
     private static AndroidMainExecutor instance = new AndroidMainExecutor();
