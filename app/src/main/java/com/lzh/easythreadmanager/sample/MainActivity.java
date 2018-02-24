@@ -2,10 +2,9 @@ package com.lzh.easythreadmanager.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.lzh.easythread.AsyncCallback;
@@ -13,97 +12,152 @@ import com.lzh.easythread.EasyThread;
 import com.lzh.easythread.Callback;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity{
 
     EasyThread executor = null;
-
-    EditText editText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        editText = (EditText) findViewById(R.id.thread_name);
         executor = EasyThread.Builder
                 .fixed(2)
                 .priority(Thread.MAX_PRIORITY)
-                .name("default thread name")
+                .callback(new ToastCallback())
                 .build();
     }
 
-    public void onNormalClick (View v) {
-        resetThreadName();
-        executor.callback(new ThreadCallback())
-                .execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d("MainActivity", "在子线程处理一些任务");
-                    }
-                });
-
-        AsyncCallback<User> async = new AsyncCallback<User>() {
-            @Override
-            public void onSuccess(User user) {
-                System.out.println("user = [" + user + "]");
-            }
-
-            @Override
-            public void onFailed(Throwable t) {
-                System.out.println("t = [" + t + "]");
-            }
-        };
-
-        executor.name("test submit")
-                .callback(new ThreadCallback())
-                // 使用异步任务
-                .async(new Callable<User>() {
-                    @Override
-                    public User call() throws Exception {
-                        User user = new User();
-                        user.username = "豪哥";
-                        user.password = "123456";
-                        return user;
-                    }
-                }, async);
+    // 启动普通Runnable任务
+    public void runnableTask(View view) {
+        executor.name("Runnable task")
+                .execute(new NormalTask());
     }
 
-    public void onExceptionClick (View v) {
-        resetThreadName();
-        executor.callback(new ThreadCallback())
-                .execute(new Runnable() {
+    public void callableTask(View view) {
+        Future<User> submit = executor.name("Callable task")
+                .submit(new NormalTask());
+
+        try {
+            User user = submit.get(3, TimeUnit.SECONDS);
+            toast("获取到任务返回信息：%s", user);
+        } catch (Exception e) {
+            toast("获取Callable任务信息失败");
+        }
+    }
+
+    public void asyncTask(View view) {
+        executor.name("Async task")
+                .async(new NormalTask(), new AsyncCallback<User>() {
                     @Override
-                    public void run() {
-                        throw new RuntimeException("故意在子线程抛出异常");
+                    public void onSuccess(User user) {
+                        toast("执行异步回调任务成功：%s", user);
+                    }
+
+                    @Override
+                    public void onFailed(Throwable t) {
+                        toast("执行异步回调任务失败：%s", t.getMessage());
                     }
                 });
     }
 
-    private class ThreadCallback implements Callback {
+    public void onExceptionClick(View view) {
+        executor.name("un catch task")
+                .execute(new UnCatchTask());
+    }
+
+    public void delayTask(View view) {
+        executor.name("delay task")
+                .delay(3, TimeUnit.SECONDS)
+                .execute(new NormalTask());
+    }
+
+    private class NormalTask implements Runnable, Callable<User> {
+        @Override
+        public void run() {
+            toast("正在执行Runnable任务：%s", Thread.currentThread().getName());
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public User call() throws Exception {
+            toast("正在执行Callable任务：%s", Thread.currentThread().getName());
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return new User("Haoge", "123456");
+        }
+    }
+
+    private class UnCatchTask implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            throw new RuntimeException("故意的");
+        }
+    }
+
+    private class LogCallback implements Callback {
+
+        private final String TAG = "LogCallback";
 
         @Override
         public void onError(Thread thread, Throwable t) {
-            Toast.makeText(MainActivity.this, String.format("线程%s运行出现异常，异常信息为：%s", thread, t.getMessage()),Toast.LENGTH_SHORT).show();
+            Log.e(TAG, t.getMessage(), t);
         }
 
         @Override
         public void onCompleted(Thread thread) {
-            Toast.makeText(MainActivity.this, String.format("线程%s运行完毕", thread),Toast.LENGTH_SHORT).show();
+            Log.d(TAG, String.format("线程%s执行完毕：", thread));
         }
 
         @Override
         public void onStart(Thread thread) {
-
+            Log.d(TAG, String.format("线程%s执行开始：", thread));
         }
     }
 
-    private void resetThreadName() {
-        String name = editText.getText().toString();
-        if (!TextUtils.isEmpty(name)) {
-            executor.name(name);
+    private class ToastCallback extends LogCallback {
+
+        @Override
+        public void onError(Thread thread, Throwable t) {
+            super.onError(thread, t);
+            toast("线程%s运行出现异常，异常信息为：%s", thread, t.getMessage());
+        }
+
+        @Override
+        public void onCompleted(Thread thread) {
+            super.onCompleted(thread);
+            toast("线程%s运行完毕", thread);
         }
     }
+
+    private void toast(final String message, final Object... args) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Toast.makeText(this, String.format(message, args), Toast.LENGTH_SHORT).show();
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this, String.format(message, args), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+    }
+
 }

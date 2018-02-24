@@ -7,27 +7,33 @@
     android:orientation="vertical"
     tools:context="com.lzh.easythreadmanager.sample.MainActivity">
 
-    <TextView
-        android:text="重置线程名："
-        android:padding="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <EditText
-        android:id="@+id/thread_name"
-        android:hint="在此指定子线程任务线程名"
+    <Button
+        android:onClick="runnableTask"
+        android:text="启动普通Runnable任务"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <Button
-        android:onClick="onNormalClick"
+        android:onClick="callableTask"
+        android:text="启动普通Callable任务"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:onClick="asyncTask"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="启动一个正常子线程任务" />
+        android:text="启动异步回调任务" />
 
     <Button
         android:onClick="onExceptionClick"
-        android:text="启动一个异常子线程任务"
+        android:text="启动抛出异常的任务"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:onClick="delayTask"
+        android:text="启动延迟任务(延迟3秒启动)"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
