@@ -24,20 +24,20 @@ public class MainActivity extends Activity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         executor = EasyThread.Builder
-                .fixed(2)
-                .priority(Thread.MAX_PRIORITY)
-                .callback(new ToastCallback())
+                .createFixed(2)
+                .setPriority(Thread.MAX_PRIORITY)
+                .setCallback(new ToastCallback())
                 .build();
     }
 
     // 启动普通Runnable任务
     public void runnableTask(View view) {
-        executor.name("Runnable task")
+        executor.setName("Runnable task")
                 .execute(new NormalTask());
     }
 
     public void callableTask(View view) {
-        Future<User> submit = executor.name("Callable task")
+        Future<User> submit = executor.setName("Callable task")
                 .submit(new NormalTask());
 
         try {
@@ -49,7 +49,7 @@ public class MainActivity extends Activity{
     }
 
     public void asyncTask(View view) {
-        executor.name("Async task")
+        executor.setName("Async task")
                 .async(new NormalTask(), new AsyncCallback<User>() {
                     @Override
                     public void onSuccess(User user) {
@@ -64,19 +64,19 @@ public class MainActivity extends Activity{
     }
 
     public void onExceptionClick(View view) {
-        executor.name("un catch task")
+        executor.setName("un catch task")
                 .execute(new UnCatchTask());
     }
 
     public void delayTask(View view) {
-        executor.name("delay task")
-                .delay(3, TimeUnit.SECONDS)
+        executor.setName("delay task")
+                .setDelay(3, TimeUnit.SECONDS)
                 .execute(new NormalTask());
     }
 
     public void switchThread(View view) {
-        executor.name("switch thread task")
-                .deliver(executor.getExecutor())// 回调到自身的线程池任务中
+        executor.setName("switch thread task")
+                .setDeliver(executor.getExecutor())// 回调到自身的线程池任务中
                 .execute(new NormalTask());
     }
 

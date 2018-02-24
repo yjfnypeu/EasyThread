@@ -16,7 +16,7 @@
 package com.lzh.easythread;
 
 /**
- * A call to notify user when thread task occurs an error or completed
+ * A callback interface to notify user that the task's status.
  */
 public interface Callback {
 

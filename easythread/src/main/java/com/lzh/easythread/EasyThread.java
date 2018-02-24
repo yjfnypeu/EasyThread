@@ -20,7 +20,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -37,8 +36,11 @@ public final class EasyThread implements Executor{
     private long delay;// delay time
     private Executor deliver;// thread deliver
 
-    private EasyThread(int type, int size, int priority, String name, Callback callback, Executor deliver) {
-        this.pool = createPool(type, size, priority);
+    private EasyThread(int type, int size, int priority, String name, Callback callback, Executor deliver, ExecutorService pool) {
+        if (pool == null) {
+            pool = createPool(type, size, priority);
+        }
+        this.pool = pool;
         this.defName = name;
         this.defCallback = callback;
         this.defDeliver = deliver;
@@ -49,7 +51,7 @@ public final class EasyThread implements Executor{
      * @param name thread name
      * @return EasyThread
      */
-    public EasyThread name (String name) {
+    public EasyThread setName(String name) {
         this.name = name;
         return this;
     }
@@ -59,7 +61,7 @@ public final class EasyThread implements Executor{
      * @param callback thread callback
      * @return EasyThread
      */
-    public EasyThread callback (Callback callback) {
+    public EasyThread setCallback (Callback callback) {
         this.callback = callback;
         return this;
     }
@@ -67,12 +69,12 @@ public final class EasyThread implements Executor{
     /**
      * Set the delay time for current task.
      *
-     * <p>Attention: it only take effects when your thread pool is create by {@link Builder#scheduled(int)}</p>
+     * <p>Attention: it only take effects when your thread pool is create by {@link Builder#createScheduled(int)}</p>
      * @param time time length
      * @param unit time unit
      * @return EasyThread
      */
-    public EasyThread delay (long time, TimeUnit unit) {
+    public EasyThread setDelay (long time, TimeUnit unit) {
         delay = unit.toMillis(time);
         return this;
     }
@@ -82,7 +84,7 @@ public final class EasyThread implements Executor{
      * @param deliver thread deliver
      * @return EasyThread
      */
-    public EasyThread deliver(Executor deliver){
+    public EasyThread setDeliver(Executor deliver){
         this.deliver = deliver;
         return this;
     }
@@ -191,18 +193,24 @@ public final class EasyThread implements Executor{
         String name;
         Callback callback;
         Executor deliver;
+        ExecutorService pool;
 
-        private Builder(int size,  int type) {
+        private Builder(int size,  int type, ExecutorService pool) {
             this.size = Math.max(1, size);
             this.type = type;
+            this.pool = pool;
+        }
+
+        public static Builder create(ExecutorService pool) {
+            return new Builder(1, TYPE_SINGLE, pool);
         }
 
         /**
          * Create thread pool by <b>Executors.newCachedThreadPool()</b>
          * @return Builder itself
          */
-        public static Builder cacheable () {
-            return new Builder(0, TYPE_CACHEABLE);
+        public static Builder createCacheable() {
+            return new Builder(0, TYPE_CACHEABLE, null);
         }
 
         /**
@@ -210,8 +218,8 @@ public final class EasyThread implements Executor{
          * @param size thread size
          * @return Builder itself
          */
-        public static Builder fixed (int size) {
-            return new Builder(size, TYPE_FIXED);
+        public static Builder createFixed(int size) {
+            return new Builder(size, TYPE_FIXED, null);
         }
 
         /**
@@ -219,8 +227,8 @@ public final class EasyThread implements Executor{
          * @param size thread size
          * @return Builder itself
          */
-        public static Builder scheduled (int size) {
-            return new Builder(size, TYPE_SCHEDULED);
+        public static Builder createScheduled(int size) {
+            return new Builder(size, TYPE_SCHEDULED, null);
         }
 
         /**
@@ -228,8 +236,8 @@ public final class EasyThread implements Executor{
          *
          * @return Builder itself
          */
-        public static Builder single () {
-            return new Builder(0, TYPE_SINGLE);
+        public static Builder createSingle() {
+            return new Builder(0, TYPE_SINGLE, null);
         }
 
         /**
@@ -237,7 +245,7 @@ public final class EasyThread implements Executor{
          * @param name default thread name
          * @return Builder itself
          */
-        public Builder name (String name) {
+        public Builder setName (String name) {
             if (!Tools.isEmpty(name)) {
                 this.name = name;
             }
@@ -249,7 +257,7 @@ public final class EasyThread implements Executor{
          * @param priority thread priority
          * @return  itself
          */
-        public Builder priority (int priority) {
+        public Builder setPriority (int priority) {
             this.priority = priority;
             return this;
         }
@@ -259,7 +267,7 @@ public final class EasyThread implements Executor{
          * @param callback thread callback
          * @return itself
          */
-        public Builder callback (Callback callback) {
+        public Builder setCallback (Callback callback) {
             this.callback = callback;
             return this;
         }
@@ -269,7 +277,7 @@ public final class EasyThread implements Executor{
          * @param deliver default thread deliver
          * @return itself
          */
-        public Builder deliver (Executor deliver) {
+        public Builder setDeliver (Executor deliver) {
             this.deliver = deliver;
             return this;
         }
@@ -282,7 +290,7 @@ public final class EasyThread implements Executor{
             priority = Math.max(Thread.MIN_PRIORITY, priority);
             priority = Math.min(Thread.MAX_PRIORITY, priority);
 
-            size = Math.max(0,size);
+            size = Math.max(1, size);
             if (Tools.isEmpty(name)) {
                 // set default thread name
                 switch (type) {
@@ -295,18 +303,20 @@ public final class EasyThread implements Executor{
                     case TYPE_SINGLE:
                         name = "SINGLE";
                         break;
+                    default:
+                        name = "EasyThread";
                 }
             }
 
             if (deliver == null) {
                 if (Tools.isAndroid) {
-                    deliver = AndroidMainExecutor.getInstance();
+                    deliver = AndroidDeliver.getInstance();
                 } else {
-                    deliver = NotSwitchExecutor.getInstance();
+                    deliver = JavaDeliver.getInstance();
                 }
             }
 
-            return new EasyThread(type, size, priority, name, callback, deliver);
+            return new EasyThread(type, size, priority, name, callback, deliver, pool);
         }
     }
 }

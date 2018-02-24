@@ -8,6 +8,7 @@
 - **极致精简**:方法数不过百
 - 可重命名线程名。方便出错后定位问题。
 - 当线程出现异常。能自动将catch异常信息传递给用户，避免程序崩溃。
+- 自带线程切换功能：指定任务执行后，在哪个线程中进行用户通知。
 - 当任务启动时与任务运行完毕后。有分别的生命周期作为通知。
 - 支持延迟任务以及异步回调任务
 
@@ -47,11 +48,12 @@ EasyThread easyThread = EasyThread.Builder
 
 ```
 easyThread.name(name)// 可分别对每次的执行任务进行重设线程名
+    .delay(time, unit)// 可指定延迟执行时间
     .callback(callback) // 可分别对每次的执行任务进行重设回调监听
     .execute(runnable) | .submit(callable) | .async(callable, asyncCallback)// 启动任务
 ```
 
-EasyThread支持执行三种任务：
+EasyThread支持执行四种任务：
 
 #### 1. 普通Runnable任务
 
@@ -107,58 +109,89 @@ easyThread.async(callable, async)
 
 #### 4. 延迟后台任务
 
-当你使用以下方法进行的easyThread创建时，才可使用延迟任务：
-
 ```
-EasyThrea.Builder.scheduled(size)
-        ...
-        build();
-```
-
-然后若需要延迟执行时，在启动之前调用下面这个方法即可：
-
-```
-easyThread.delay(time, unit);
+// 在启动任务前，调用delay方法，指定延迟时间即可
+easyThread.delay(time, unit)
+    .execute(runnable);
 ```
 
 **e.g 延迟3秒启动执行任务**
 
 ```
-EasyThread easyThread = EasyThread.Builder.scheduled(1)
-            ...
-            build();
-            
 easyThread.delay(3, TimeUnit.SECONDS)
         .execute(task);
 ```
 
-**NOTE:若未在每次启动任务前，对name与callback进行重置，则启动时将会使用默认的(使用Builder创建时设置的)参数执行**
+### 回调通知接口
 
-- 线程执行回调监听器
+EasyThread提供两种回调接口：**Callback与AsyncCallback**:
 
-	对于监听器回调函数运行所处线程。EasyThread内部有单独处理。
-	1. 当在纯java环境下使用时，回调函数所处线程与任务执行线程一致。
-	2. 当在Android环境下使用时，回调函数所处线程为主线程。
+#### 1. Callback
 
-```
-ThreadCallback implements Callback {
+所有线程任务共有的，用于对当前的任务状态进行监听、通知用户。
 
-    @Override
-    public void onError(Thread thread, Throwable t) {
-        // 当使用EasyThread启动后台任务后，若在子线程运行过程中。出现了异常。将会将异常错误 t 回调通知到此方法中通知用户
-    }
-
-    @Override
-    public void onCompleted(Thread thread) {
-        // 当使用EasyThread启动后台任务后，若子线程运行完毕。将会回调到此方法中通知用户
-    }
-
-    @Override
-    public void onStart(Thread thread) {
-        // 当子线程启动运行时，回调到此方法通知用户。
-    }
+```java
+public interface Callback {
+	// 当任务启动时。通知到此。
+	void onStart (Thread thread);
+	// 当任务执行过程中出现异常时，捕获住异常并通知到此。
+	void onError (Thread thread, Throwable t);
+	// 当任务执行一切顺利。执行完毕后，通知到此。
+	void onCompleted (Thread thread);
 }
 ```
+
+- 配置方式：
+
+```
+// 配置默认状态回调通知：
+EasyThread.Builder.single().callback(callback);
+
+// 配置本次任务执行时的回调通知：
+easyThread.callback(callback);
+```
+
+- **AsyncCallback**:
+
+异步回调接口只存在于执行异步任务操作时。
+
+```
+public interface AsyncCallback<T> {
+	// 执行异步任务完成。将结果回调返回
+	void onSuccess(T t);
+	// 执行异步任务失败，将失败异常回调返回
+	void onFailed(Throwable t);
+}
+```
+
+- 配置方式：参考上方的**异步回调任务**示例代码
+
+### 回调任务派发器
+
+所谓派发器。就是用于指定线程任务的回调通知运行在哪个线程中的一种机制。
+
+比如说在Android平台，很常见的就是回调时需要进行界面通知，所以这个时候就需要回调通知运行在UI线程。便于操作。
+
+**配置方式**
+
+- **配置默认派发器**:
+
+```
+EasyThread executor = EasyThread.Builder
+	...// 创建Builder
+	.deliver(deliver);
+```
+
+- **配置当前任务使用的派发器**：
+
+```
+easyThread.deliver(deliver);
+```
+
+在默认条件下(即未配置额外的派发器时)，在Android或者Java平台，分别适配了不同的回调派发逻辑：
+
+- **在纯java环境下：回调方法所运行的线程与任务执行线程一致**
+- **在Android环境：回调方法默认运行于主线程**
 
 ### Example
 

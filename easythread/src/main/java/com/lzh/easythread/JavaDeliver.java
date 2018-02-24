@@ -15,11 +15,22 @@
  */
 package com.lzh.easythread;
 
+import java.util.concurrent.Executor;
+
 /**
- * Async callback interface.
- * @author haoge on 2018/2/9.
+ * The deliver for <b>Java Platform</b> by default.
+ * @author haoge
  */
-public interface AsyncCallback<T> {
-    void onSuccess(T t);
-    void onFailed(Throwable t);
+final class JavaDeliver implements Executor {
+
+    private static JavaDeliver instance = new JavaDeliver();
+
+    static JavaDeliver getInstance() {
+        return instance;
+    }
+
+    @Override
+    public void execute(Runnable runnable) {
+        runnable.run();
+    }
 }
