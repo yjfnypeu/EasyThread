@@ -34,11 +34,12 @@ compile "com.github.yjfnypeu:EasyThread:$lastestVersion"
 
 ```
 EasyThread easyThread = EasyThread.Builder
-            // 通过此三种方法指定所管理器所需要使用的线程池类型，对应Executors.newXXXThreadPool
-            .fixed(2) | .cacheable() | .single()
-            .priority(priority) //指定任务执行时所使用的线程优先级
-            .name(DEFAULT_THREAD_NAME)// 指定子线程执行时所使用的线程名
-            .callback(DEFAULT_CALLBACK) // 指定子线程执行时所使用的回调监听
+            //提供了四种create方法，用于根据需要创建不同类型的线程池进行使用。
+            //比如createSingle():表示创建一个单例的线程池进行使用
+            .createXXX()
+            .setPriority(priority) //指定任务执行时所使用的线程优先级
+            .setName(DEFAULT_THREAD_NAME)// 指定子线程执行时所使用的线程名
+            .setCallback(DEFAULT_CALLBACK) // 指定子线程执行时所使用的回调监听
             .build();
 ```
 
@@ -48,8 +49,8 @@ EasyThread easyThread = EasyThread.Builder
 
 ```
 easyThread.name(name)// 可分别对每次的执行任务进行重设线程名
-    .delay(time, unit)// 可指定延迟执行时间
-    .callback(callback) // 可分别对每次的执行任务进行重设回调监听
+    .setDelay(time, unit)// 可指定延迟执行时间
+    .setCallback(callback) // 可分别对每次的执行任务进行重设回调监听
     .execute(runnable) | .submit(callable) | .async(callable, asyncCallback)// 启动任务
 ```
 
@@ -111,14 +112,14 @@ easyThread.async(callable, async)
 
 ```
 // 在启动任务前，调用delay方法，指定延迟时间即可
-easyThread.delay(time, unit)
+easyThread.setDelay(time, unit)
     .execute(runnable);
 ```
 
 **e.g 延迟3秒启动执行任务**
 
 ```
-easyThread.delay(3, TimeUnit.SECONDS)
+easyThread.setDelay(3, TimeUnit.SECONDS)
         .execute(task);
 ```
 
@@ -145,7 +146,7 @@ public interface Callback {
 
 ```
 // 配置默认状态回调通知：
-EasyThread.Builder.single().callback(callback);
+EasyThread.Builder.createXXX().callback(callback);
 
 // 配置本次任务执行时的回调通知：
 easyThread.callback(callback);
@@ -178,14 +179,14 @@ public interface AsyncCallback<T> {
 
 ```
 EasyThread executor = EasyThread.Builder
-	...// 创建Builder
+	.createXXX()
 	.deliver(deliver);
 ```
 
 - **配置当前任务使用的派发器**：
 
 ```
-easyThread.deliver(deliver);
+easyThread.setDeliver(deliver);
 ```
 
 在默认条件下(即未配置额外的派发器时)，在Android或者Java平台，分别适配了不同的回调派发逻辑：
@@ -222,10 +223,10 @@ public final class ThreadManager {
     }
 
     static {
-        io = EasyThread.Builder.fixed(6).name("IO").priority(7).callback(new DefaultCallback()).build();
-        cache = EasyThread.Builder.cacheable().name("cache").callback(new DefaultCallback()).build();
-        calculator = EasyThread.Builder.fixed(4).name("calculator").priority(Thread.MAX_PRIORITY).callback(new DefaultCallback()).build();
-        file = EasyThread.Builder.fixed(4).name("file").priority(3).callback(new DefaultCallback()).build();
+        io = EasyThread.Builder.createFixed(6).setName("IO").setPriority(7).setCallback(new DefaultCallback()).build();
+        cache = EasyThread.Builder.createCacheable().setName("cache").setCallback(new DefaultCallback()).build();
+        calculator = EasyThread.Builder.createFixed(4).setName("calculator").setPriority(Thread.MAX_PRIORITY).setCallback(new DefaultCallback()).build();
+        file = EasyThread.Builder.createFixed(4).setName("file").setPriority(3).setCallback(new DefaultCallback()).build();
     }
 
     private static class DefaultCallback implements Callback {
