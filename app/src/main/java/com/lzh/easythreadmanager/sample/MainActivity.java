@@ -74,6 +74,12 @@ public class MainActivity extends Activity{
                 .execute(new NormalTask());
     }
 
+    public void switchThread(View view) {
+        executor.name("switch thread task")
+                .deliver(executor.getExecutor())// 回调到自身的线程池任务中
+                .execute(new NormalTask());
+    }
+
     private class NormalTask implements Runnable, Callable<User> {
         @Override
         public void run() {
@@ -117,17 +123,17 @@ public class MainActivity extends Activity{
 
         @Override
         public void onError(Thread thread, Throwable t) {
-            Log.e(TAG, t.getMessage(), t);
+            Log.e(TAG, String.format("[任务线程%s]/[回调线程%s]执行失败: %s", thread, Thread.currentThread(), t.getMessage()), t);
         }
 
         @Override
         public void onCompleted(Thread thread) {
-            Log.d(TAG, String.format("线程%s执行完毕：", thread));
+            Log.d(TAG, String.format("[任务线程%s]/[回调线程%s]执行完毕：", thread, Thread.currentThread()));
         }
 
         @Override
         public void onStart(Thread thread) {
-            Log.d(TAG, String.format("线程%s执行开始：", thread));
+            Log.d(TAG, String.format("[任务线程%s]/[回调线程%s]执行开始：", thread, Thread.currentThread()));
         }
     }
 

@@ -1,1 +1,1 @@
-include ':app', ':easythread', ':javatest'
+include ':app', ':easythread'
