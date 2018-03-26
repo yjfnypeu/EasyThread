@@ -23,6 +23,7 @@ public class MainActivity extends Activity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // 创建一个独立的实例进行使用
         executor = EasyThread.Builder
                 .createFixed(2)
                 .setPriority(Thread.MAX_PRIORITY)

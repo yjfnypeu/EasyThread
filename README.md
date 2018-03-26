@@ -1,18 +1,18 @@
 # EasyThread ![travis-ci](https://travis-ci.org/yjfnypeu/EasyThread.svg?branch=master)
 <a href="http://www.methodscount.com/?lib=com.github.yjfnypeu%3AEasyThread%3A0.1"><img src="https://img.shields.io/badge/Methods count-61-e91e63.svg"/></a>
 
-一款安全、轻巧、简单的线程池管理器
+EasyThread通过对原生的线程池进行封装，可让你更方便的进行线程任务操作。
 
-### 特性
+## 特性
 
-- **极致精简**:方法数不过百
-- 可重命名线程名。方便出错后定位问题。
-- 当线程出现异常。能自动将catch异常信息传递给用户，避免程序崩溃。
-- 自带线程切换功能：指定任务执行后，在哪个线程中进行用户通知。
-- 当任务启动时与任务运行完毕后。有分别的生命周期作为通知。
-- 支持延迟任务以及异步回调任务
+- **简单轻巧**:方法数不过百，无额外次级依赖。
+- **配置灵活**:可方便、灵活的对每次所启动的任务，配置线程名、线程优先级等。
+- **使用安全**:当线程出现异常。能自动将catch异常信息传递给用户，避免出现crash。
+- **线程切换**:自带线程切换功能：指定任务执行后，在哪个线程中进行用户通知。
+- **回调通知**:当任务启动时与任务运行完毕后。有分别的生命周期作为通知。
+- **任务扩展**:支持*延迟任务*以及*异步回调任务*
 
-### 依赖
+## 依赖
 
 lastestVersion = [![](https://jitpack.io/v/yjfnypeu/EasyThread.svg)](https://jitpack.io/#yjfnypeu/EasyThread)
 
@@ -24,39 +24,25 @@ maven { url 'https://jitpack.io' }
 compile "com.github.yjfnypeu:EasyThread:$lastestVersion"
 ```
 
-### 用法
+## 基本用法
 
 使用方式分两步走：
 
-- 第一步：
-
-创建EasyThread实例。每个EasyThread实例会持有一个独立的线程池。
+- 第一步：创建EasyThread实例。每个EasyThread实例会持有一个独立的线程池提供使用。
 
 ```
 EasyThread easyThread = EasyThread.Builder
-            //提供了四种create方法，用于根据需要创建不同类型的线程池进行使用。
+            //提供了四种create方法，用于根据需要创建不同类型的线程池进行使用
             //比如createSingle():表示创建一个单例的线程池进行使用
             .createXXX()
-            .setPriority(priority) //指定任务执行时所使用的线程优先级
-            .setName(DEFAULT_THREAD_NAME)// 指定子线程执行时所使用的线程名
-            .setCallback(DEFAULT_CALLBACK) // 指定子线程执行时所使用的回调监听
             .build();
 ```
 
-- 第二步：
-
-使用创建的EasyThread实例进行任务执行：
-
-```
-easyThread.name(name)// 可分别对每次的执行任务进行重设线程名
-    .setDelay(time, unit)// 可指定延迟执行时间
-    .setCallback(callback) // 可分别对每次的执行任务进行重设回调监听
-    .execute(runnable) | .submit(callable) | .async(callable, asyncCallback)// 启动任务
-```
+- 第二步：使用创建的EasyThread实例进行任务执行：
 
 EasyThread支持执行四种任务：
 
-#### 1. 普通Runnable任务
+### 1. 普通Runnable任务
 
 ```
 easyThread.execute(new Runnable(){
@@ -67,7 +53,7 @@ easyThread.execute(new Runnable(){
 });
 ```
 
-#### 2. 普通Callable任务
+### 2. 普通Callable任务
 
 ```
 Future task = easyThread.submit(new Callback<User>(){
@@ -79,7 +65,7 @@ Future task = easyThread.submit(new Callback<User>(){
 })
 User result = task.get();
 ```
-#### 3. 异步回调任务
+### 3. 异步回调任务
 
 ```
 // 异步执行任务
@@ -108,7 +94,7 @@ AsyncCallback<User> async = new AsyncCallback<User>() {
 easyThread.async(callable, async)
 ```
 
-#### 4. 延迟后台任务
+### 4. 延迟后台任务
 
 ```
 // 在启动任务前，调用delay方法，指定延迟时间即可
@@ -123,69 +109,66 @@ easyThread.setDelay(3, TimeUnit.SECONDS)
         .execute(task);
 ```
 
-### 回调通知接口
+## 高级配置
 
-EasyThread提供两种回调接口：**Callback与AsyncCallback**:
+EasyThread提供了各种的额外配置，通过这些配置可以让线程操作使用起来更加得心应手。
 
-#### 1. Callback
+### 两种配置方式
 
-所有线程任务共有的，用于对当前的任务状态进行监听、通知用户。
+这里我们以配置后台优先级进行说明：
+
+**1. 配置默认线程任务优先级(默认配置)**
+
+```
+EasyThread.Builder.createXXX().setPriority(priority);
+```
+
+**2. 配置当前线程任务优先级(当前任务配置)**
+
+```
+easyThread.setPriority(priority).execute(task);
+```
+
+### 线程优先级及线程名
+
+配置方式：
+
+```
+easyThread.setName(name)// 配置线程任务名
+	.setPriority()// 配置线程运行优先级
+```
+
+### 任务回调通知
+
+接口说明：
 
 ```java
 public interface Callback {
-	// 当任务启动时。通知到此。
-	void onStart (Thread thread);
-	// 当任务执行过程中出现异常时，捕获住异常并通知到此。
-	void onError (Thread thread, Throwable t);
-	// 当任务执行一切顺利。执行完毕后，通知到此。
-	void onCompleted (Thread thread);
+    // 线程任务启动时的通知
+    void onStart (Thread thread);
+    // 线程任务运行时出现异常时的通知
+    void onError (Thread thread, Throwable t);
+    // 线程任务正常执行完成时的通知
+    void onCompleted (Thread thread);
 }
 ```
 
-- 配置方式：
+配置方式：
 
 ```
-// 配置默认状态回调通知：
-EasyThread.Builder.createXXX().callback(callback);
-
-// 配置本次任务执行时的回调通知：
-easyThread.callback(callback);
+easyThread.setCallback(callback);
 ```
 
-- **AsyncCallback**:
+### 消息派发器
 
-异步回调接口只存在于执行异步任务操作时。
+消息派发器用于消息回调线程切换，即指定回调任务需要运行在什么线程之上。
 
-```
-public interface AsyncCallback<T> {
-	// 执行异步任务完成。将结果回调返回
-	void onSuccess(T t);
-	// 执行异步任务失败，将失败异常回调返回
-	void onFailed(Throwable t);
-}
-```
+比如说在Android平台，很常见的就是回调时需要进行界面通知，所以这个时候就需要回调通知运行在UI线，便于操作。
 
-- 配置方式：参考上方的**异步回调任务**示例代码
-
-### 回调任务派发器
-
-所谓派发器。就是用于指定线程任务的回调通知运行在哪个线程中的一种机制。
-
-比如说在Android平台，很常见的就是回调时需要进行界面通知，所以这个时候就需要回调通知运行在UI线程。便于操作。
-
-**配置方式**
-
-- **配置默认派发器**:
+配置方式：
 
 ```
-EasyThread executor = EasyThread.Builder
-	.createXXX()
-	.deliver(deliver);
-```
-
-- **配置当前任务使用的派发器**：
-
-```
+// 派发器的实例类型为java.util.concurrent.Executor子类
 easyThread.setDeliver(deliver);
 ```
 
@@ -194,9 +177,9 @@ easyThread.setDeliver(deliver);
 - **在纯java环境下：回调方法所运行的线程与任务执行线程一致**
 - **在Android环境：回调方法默认运行于主线程**
 
-### Example
+## 推荐配置
 
-对于程序来说。线程资源是宝贵的。为了避免创建过多额外的线程，所以建议对每个app。提供一个统一的管理器维护所有的线程池，如下所示：
+对于APP来说。线程资源是宝贵的。为了避免创建过多额外的线程，所以建议对每个app。提供一个统一的管理器维护所有的线程池，如下所示：
 
 ```java
 public final class ThreadManager {
