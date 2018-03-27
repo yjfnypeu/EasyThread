@@ -25,12 +25,12 @@ final class Tools {
      * @param name  non-null, thread name
      * @param callback a callback to notify user.
      */
-    static void resetThread(Thread thread, String name, final Callback callback) {
+    static void resetThread(Thread thread, final String name, final Callback callback) {
         thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread t, Throwable e) {
                 if (callback != null) {
-                    callback.onError(t,e);
+                    callback.onError(name, e);
                 }
             }
         });
