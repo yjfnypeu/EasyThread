@@ -58,7 +58,7 @@ easyThread.execute(new Runnable(){
 ```
 Future task = easyThread.submit(new Callback<User>(){
     @Override
-    public void call() throws Exception {
+    public User call() throws Exception {
         // do something
         return user;
     }
@@ -71,7 +71,7 @@ User result = task.get();
 // 异步执行任务
 Callable<User> callable = new Callable<User>(){
     @Override
-    public void call() throws Exception {
+    public User call() throws Exception {
         // do something
         return user;
     }
@@ -115,18 +115,18 @@ EasyThread提供了各种的额外配置，通过这些配置可以让线程操�
 
 ### 两种配置方式
 
-这里我们以配置后台优先级进行说明：
+这里我们以配置后台任务名进行说明：
 
-**1. 配置默认线程任务优先级(默认配置)**
-
-```
-EasyThread.Builder.createXXX().setPriority(priority);
-```
-
-**2. 配置当前线程任务优先级(当前任务配置)**
+**1. 配置默认线程任务名(默认配置)**
 
 ```
-easyThread.setPriority(priority).execute(task);
+EasyThread.Builder.createXXX().setName(name);
+```
+
+**2. 配置当前线程任务名(当前任务配置)**
+
+```
+easyThread.setName(name).execute(task);
 ```
 
 ### 线程优先级及线程名
@@ -145,11 +145,11 @@ easyThread.setName(name)// 配置线程任务名
 ```java
 public interface Callback {
     // 线程任务启动时的通知
-    void onStart (Thread thread);
+    void onStart (String threadName);
     // 线程任务运行时出现异常时的通知
-    void onError (Thread thread, Throwable t);
+    void onError (String threadName, Throwable t);
     // 线程任务正常执行完成时的通知
-    void onCompleted (Thread thread);
+    void onCompleted (String threadName);
 }
 ```
 
@@ -215,18 +215,18 @@ public final class ThreadManager {
     private static class DefaultCallback implements Callback {
 
         @Override
-        public void onError(Thread thread, Throwable t) {
-            MyLog.e("Task with thread %s has occurs an error: %s", thread, t.getMessage());
+        public void onError(String threadName, Throwable t) {
+            MyLog.e("Task with thread %s has occurs an error: %s", threadName, t.getMessage());
         }
 
         @Override
-        public void onCompleted(Thread thread) {
-            MyLog.d("Task with thread %s completed", thread);
+        public void onCompleted(String threadName) {
+            MyLog.d("Task with thread %s completed", threadName);
         }
 
         @Override
-        public void onStart(Thread thread) {
-            MyLog.d("Task with thread %s start running!", thread);
+        public void onStart(String threadName) {
+            MyLog.d("Task with thread %s start running!", threadName);
         }
     }
 }
