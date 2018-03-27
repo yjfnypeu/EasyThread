@@ -20,6 +20,12 @@
         android:layout_height="wrap_content" />
 
     <Button
+        android:onClick="multiThreadTask"
+        android:text="多线程并发启动"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
         android:onClick="asyncTask"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

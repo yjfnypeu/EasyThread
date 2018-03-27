@@ -62,36 +62,36 @@ final class CallbackDelegate implements Callback, AsyncCallback {
     }
 
     @Override
-    public void onError(final Thread thread, final Throwable t) {
+    public void onError(final String name, final Throwable t) {
         onFailed(t);
 
         if (callback == null) return;
         deliver.execute(new Runnable() {
             @Override
             public void run() {
-                callback.onError(thread, t);
+                callback.onError(name, t);
             }
         });
     }
 
     @Override
-    public void onCompleted(final Thread thread) {
+    public void onCompleted(final String name) {
         if (callback == null) return;
         deliver.execute(new Runnable() {
             @Override
             public void run() {
-                callback.onCompleted(thread);
+                callback.onCompleted(name);
             }
         });
     }
 
     @Override
-    public void onStart(final Thread thread) {
+    public void onStart(final String name) {
         if (callback == null) return;
         deliver.execute(new Runnable() {
             @Override
             public void run() {
-                callback.onStart(thread);
+                callback.onStart(name);
             }
         });
     }

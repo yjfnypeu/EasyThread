@@ -30,11 +30,8 @@ public final class EasyThread implements Executor{
     private Callback defCallback;// default thread callback
     private Executor defDeliver;// default thread deliver
 
-    // ==== There are temp configs(once)
-    private String name;// thread name
-    private Callback callback;// thread callback
-    private long delay;// delay time
-    private Executor deliver;// thread deliver
+    // to make sure no conflict for multi thread config.
+    private ThreadLocal<Configs> local;
 
     private EasyThread(int type, int size, int priority, String name, Callback callback, Executor deliver, ExecutorService pool) {
         if (pool == null) {
@@ -44,6 +41,7 @@ public final class EasyThread implements Executor{
         this.defName = name;
         this.defCallback = callback;
         this.defDeliver = deliver;
+        this.local = new ThreadLocal<>();
     }
 
     /**
@@ -52,7 +50,7 @@ public final class EasyThread implements Executor{
      * @return EasyThread
      */
     public EasyThread setName(String name) {
-        this.name = name;
+        getLocalConfigs().name = name;
         return this;
     }
 
@@ -62,7 +60,7 @@ public final class EasyThread implements Executor{
      * @return EasyThread
      */
     public EasyThread setCallback (Callback callback) {
-        this.callback = callback;
+        getLocalConfigs().callback = callback;
         return this;
     }
 
@@ -75,7 +73,8 @@ public final class EasyThread implements Executor{
      * @return EasyThread
      */
     public EasyThread setDelay (long time, TimeUnit unit) {
-        delay = unit.toMillis(time);
+        long delay = unit.toMillis(time);
+        getLocalConfigs().delay = delay;
         return this;
     }
 
@@ -85,7 +84,7 @@ public final class EasyThread implements Executor{
      * @return EasyThread
      */
     public EasyThread setDeliver(Executor deliver){
-        this.deliver = deliver;
+        getLocalConfigs().deliver = deliver;
         return this;
     }
 
@@ -95,9 +94,9 @@ public final class EasyThread implements Executor{
      */
     @Override
     public void execute (Runnable runnable) {
-        runnable = new RunnableWrapper(getName(), delay, getCallback(null)).setRunnable(runnable);
+        runnable = new RunnableWrapper(getLocalConfigs()).setRunnable(runnable);
         pool.execute(runnable);
-        release();
+        resetLocalConfigs();
     }
 
     /**
@@ -107,10 +106,12 @@ public final class EasyThread implements Executor{
      * @param <T> type
      */
     public <T> void async(Callable<T> callable, AsyncCallback<T> callback) {
-        Runnable runnable = new RunnableWrapper(getName(), delay, getCallback(callback))
+        Configs configs = getLocalConfigs();
+        configs.asyncCallback = callback;
+        Runnable runnable = new RunnableWrapper(configs)
                 .setCallable(callable);
         pool.execute(runnable);
-        release();
+        resetLocalConfigs();
     }
 
     /**
@@ -121,9 +122,9 @@ public final class EasyThread implements Executor{
      */
     public <T> Future<T> submit (Callable<T> callable) {
         Future<T> result;
-        callable = new CallableWrapper<>(getName(), delay, getCallback(null),callable);
+        callable = new CallableWrapper<>(getLocalConfigs(), callable);
         result = pool.submit(callable);
-        release();
+        resetLocalConfigs();
         return result;
     }
 
@@ -133,23 +134,6 @@ public final class EasyThread implements Executor{
      */
     public ExecutorService getExecutor() {
         return pool;
-    }
-
-    private void release() {
-        this.name = null;
-        this.callback = null;
-        this.delay = -1;
-        this.deliver = null;
-    }
-
-    private String getName () {
-        return Tools.isEmpty(name) ? defName : name;
-    }
-
-    private CallbackDelegate getCallback (AsyncCallback async) {
-        Callback used = this.callback == null ? defCallback : callback;
-        Executor deliver = this.deliver == null ? defDeliver : this.deliver;
-        return new CallbackDelegate(used, deliver, async);
     }
 
     private ExecutorService createPool(int type, int size, int priority) {
@@ -164,6 +148,22 @@ public final class EasyThread implements Executor{
             default:
                 return Executors.newSingleThreadExecutor(new DefaultFactory(priority));
         }
+    }
+
+    private synchronized void resetLocalConfigs() {
+        local.set(null);
+    }
+
+    private synchronized Configs getLocalConfigs() {
+        Configs configs = local.get();
+        if (configs == null) {
+            configs = new Configs();
+            configs.name = defName;
+            configs.callback = defCallback;
+            configs.deliver = defDeliver;
+            local.set(configs);
+        }
+        return configs;
     }
 
     private static class DefaultFactory implements ThreadFactory {

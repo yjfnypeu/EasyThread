@@ -25,10 +25,10 @@ final class RunnableWrapper implements Runnable {
     private Callable callable;
     private long delay;
 
-    RunnableWrapper(String name, long delay, CallbackDelegate callback) {
-        this.name = name;
-        this.delegate = callback;
-        this.delay = delay;
+    RunnableWrapper(Configs configs) {
+        this.name = configs.name;
+        this.delay = configs.delay;
+        this.delegate = new CallbackDelegate(configs.callback, configs.deliver, configs.asyncCallback);
     }
 
     RunnableWrapper setRunnable(Runnable runnable) {
@@ -46,7 +46,7 @@ final class RunnableWrapper implements Runnable {
         Thread current = Thread.currentThread();
         Tools.resetThread(current, name, delegate);
         Tools.sleepThread(delay);
-        delegate.onStart(current);
+        delegate.onStart(name);
 
         // avoid NullPointException
         if (runnable != null) {
@@ -56,9 +56,9 @@ final class RunnableWrapper implements Runnable {
                 Object result = callable.call();
                 delegate.onSuccess(result);
             } catch (Exception e) {
-                delegate.onError(current, e);
+                delegate.onError(name, e);
             }
         }
-        delegate.onCompleted(current);
+        delegate.onCompleted(name);
     }
 }

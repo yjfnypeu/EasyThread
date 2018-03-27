@@ -23,11 +23,11 @@ final class CallableWrapper<T> implements Callable<T> {
     private Callable<T> proxy;
     private long delay;
 
-    CallableWrapper(String name, long delay, Callback callback, Callable<T> proxy) {
-        this.name = name;
-        this.callback = callback;
+    CallableWrapper(Configs configs, Callable<T> proxy) {
+        this.name = configs.name;
+        this.delay = configs.delay;
         this.proxy = proxy;
-        this.delay = delay;
+        this.callback = new CallbackDelegate(configs.callback, configs.deliver, configs.asyncCallback);
     }
 
     @Override
@@ -35,13 +35,13 @@ final class CallableWrapper<T> implements Callable<T> {
         Tools.resetThread(Thread.currentThread(),name,callback);
         Tools.sleepThread(delay);
         if (callback != null) {
-            callback.onStart(Thread.currentThread());
+            callback.onStart(name);
         }
 
         // avoid NullPointException
         T t = proxy == null ? null : proxy.call();
         if (callback != null)  {
-            callback.onCompleted(Thread.currentThread());
+            callback.onCompleted(name);
         }
         return t;
     }

@@ -22,20 +22,20 @@ public interface Callback {
 
     /**
      * This method will be invoked when thread has been occurs an error.
-     * @param thread The thread who has been occurs an error
+     * @param threadName The running thread name
      * @param t The exception
      */
-    void onError (Thread thread, Throwable t);
+    void onError (String threadName, Throwable t);
 
     /**
      * notify user to know that it completed.
-     * @param thread The running thread
+     * @param threadName The running thread name
      */
-    void onCompleted (Thread thread);
+    void onCompleted (String threadName);
 
     /**
      * notify user that task start running
-     * @param thread The running thread
+     * @param threadName The running thread name
      */
-    void onStart (Thread thread);
+    void onStart (String threadName);
 }

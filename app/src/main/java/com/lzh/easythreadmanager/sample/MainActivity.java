@@ -8,8 +8,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.lzh.easythread.AsyncCallback;
-import com.lzh.easythread.EasyThread;
 import com.lzh.easythread.Callback;
+import com.lzh.easythread.EasyThread;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -25,7 +25,7 @@ public class MainActivity extends Activity{
         setContentView(R.layout.activity_main);
         // 创建一个独立的实例进行使用
         executor = EasyThread.Builder
-                .createFixed(2)
+                .createFixed(4)
                 .setPriority(Thread.MAX_PRIORITY)
                 .setCallback(new ToastCallback())
                 .build();
@@ -81,6 +81,26 @@ public class MainActivity extends Activity{
                 .execute(new NormalTask());
     }
 
+    public void multiThreadTask(View view) {
+
+        for (int i = 0; i < 10; i++) {
+            final int index = i;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    executor.setName("MultiTask" + index)
+                            .setCallback(new LogCallback())
+                            .execute(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                }
+                            });
+                }
+            }).start();
+        }
+    }
+
     private class NormalTask implements Runnable, Callable<User> {
         @Override
         public void run() {
@@ -123,33 +143,33 @@ public class MainActivity extends Activity{
         private final String TAG = "LogCallback";
 
         @Override
-        public void onError(Thread thread, Throwable t) {
-            Log.e(TAG, String.format("[任务线程%s]/[回调线程%s]执行失败: %s", thread, Thread.currentThread(), t.getMessage()), t);
+        public void onError(String name, Throwable t) {
+            Log.e(TAG, String.format("[任务线程%s]/[回调线程%s]执行失败: %s", name, Thread.currentThread(), t.getMessage()), t);
         }
 
         @Override
-        public void onCompleted(Thread thread) {
-            Log.d(TAG, String.format("[任务线程%s]/[回调线程%s]执行完毕：", thread, Thread.currentThread()));
+        public void onCompleted(String name) {
+            Log.d(TAG, String.format("[任务线程%s]/[回调线程%s]执行完毕：", name, Thread.currentThread()));
         }
 
         @Override
-        public void onStart(Thread thread) {
-            Log.d(TAG, String.format("[任务线程%s]/[回调线程%s]执行开始：", thread, Thread.currentThread()));
+        public void onStart(String name) {
+            Log.d(TAG, String.format("[任务线程%s]/[回调线程%s]执行开始：", name, Thread.currentThread()));
         }
     }
 
     private class ToastCallback extends LogCallback {
 
         @Override
-        public void onError(Thread thread, Throwable t) {
-            super.onError(thread, t);
-            toast("线程%s运行出现异常，异常信息为：%s", thread, t.getMessage());
+        public void onError(String name, Throwable t) {
+            super.onError(name, t);
+            toast("线程%s运行出现异常，异常信息为：%s", name, t.getMessage());
         }
 
         @Override
-        public void onCompleted(Thread thread) {
-            super.onCompleted(thread);
-            toast("线程%s运行完毕", thread);
+        public void onCompleted(String name) {
+            super.onCompleted(name);
+            toast("线程%s运行完毕", name);
         }
     }
 
