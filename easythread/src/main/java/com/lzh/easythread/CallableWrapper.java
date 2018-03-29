@@ -21,11 +21,9 @@ final class CallableWrapper<T> implements Callable<T> {
     private String name;
     private Callback callback;
     private Callable<T> proxy;
-    private long delay;
 
     CallableWrapper(Configs configs, Callable<T> proxy) {
         this.name = configs.name;
-        this.delay = configs.delay;
         this.proxy = proxy;
         this.callback = new CallbackDelegate(configs.callback, configs.deliver, configs.asyncCallback);
     }

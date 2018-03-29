@@ -23,11 +23,9 @@ final class RunnableWrapper implements Runnable {
     private CallbackDelegate delegate;
     private Runnable runnable;
     private Callable callable;
-    private long delay;
 
     RunnableWrapper(Configs configs) {
         this.name = configs.name;
-        this.delay = configs.delay;
         this.delegate = new CallbackDelegate(configs.callback, configs.deliver, configs.asyncCallback);
     }
 
