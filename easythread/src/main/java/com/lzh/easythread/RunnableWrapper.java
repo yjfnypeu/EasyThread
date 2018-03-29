@@ -45,7 +45,6 @@ final class RunnableWrapper implements Runnable {
     public void run() {
         Thread current = Thread.currentThread();
         Tools.resetThread(current, name, delegate);
-        Tools.sleepThread(delay);
         delegate.onStart(name);
 
         // avoid NullPointException

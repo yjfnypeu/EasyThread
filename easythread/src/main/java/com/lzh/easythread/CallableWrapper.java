@@ -33,7 +33,6 @@ final class CallableWrapper<T> implements Callable<T> {
     @Override
     public T call() throws Exception {
         Tools.resetThread(Thread.currentThread(),name,callback);
-        Tools.sleepThread(delay);
         if (callback != null) {
             callback.onStart(name);
         }

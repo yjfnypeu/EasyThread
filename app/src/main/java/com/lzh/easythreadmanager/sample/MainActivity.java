@@ -70,9 +70,11 @@ public class MainActivity extends Activity{
     }
 
     public void delayTask(View view) {
-        executor.setName("delay task")
-                .setDelay(3, TimeUnit.SECONDS)
-                .execute(new NormalTask());
+        for (int i = 0; i < 6; i++) {
+            executor.setName("delay task" + i)
+                    .setDelay(i, TimeUnit.SECONDS)
+                    .execute(new NormalTask());
+        }
     }
 
     public void switchThread(View view) {
@@ -82,7 +84,7 @@ public class MainActivity extends Activity{
     }
 
     public void multiThreadTask(View view) {
-
+        // 多线程并发启动任务测试
         for (int i = 0; i < 10; i++) {
             final int index = i;
             new Thread(new Runnable() {
@@ -92,9 +94,7 @@ public class MainActivity extends Activity{
                             .setCallback(new LogCallback())
                             .execute(new Runnable() {
                                 @Override
-                                public void run() {
-
-                                }
+                                public void run() {}
                             });
                 }
             }).start();
