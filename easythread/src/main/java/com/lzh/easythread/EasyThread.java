@@ -74,7 +74,7 @@ public final class EasyThread implements Executor{
      */
     public EasyThread setDelay (long time, TimeUnit unit) {
         long delay = unit.toMillis(time);
-        getLocalConfigs().delay = delay;
+        getLocalConfigs().delay = Math.max(0, delay);
         return this;
     }
 
@@ -94,8 +94,9 @@ public final class EasyThread implements Executor{
      */
     @Override
     public void execute (Runnable runnable) {
-        runnable = new RunnableWrapper(getLocalConfigs()).setRunnable(runnable);
-        pool.execute(runnable);
+        Configs configs = getLocalConfigs();
+        runnable = new RunnableWrapper(configs).setRunnable(runnable);
+        DelayTaskDispatcher.get().postDelay(configs.delay, pool, runnable);
         resetLocalConfigs();
     }
 
@@ -110,7 +111,7 @@ public final class EasyThread implements Executor{
         configs.asyncCallback = callback;
         Runnable runnable = new RunnableWrapper(configs)
                 .setCallable(callable);
-        pool.execute(runnable);
+        DelayTaskDispatcher.get().postDelay(configs.delay, pool, runnable);
         resetLocalConfigs();
     }
 
